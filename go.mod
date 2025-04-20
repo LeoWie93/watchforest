@@ -1,5 +1,7 @@
-module watchforest
+module github.com/leowie93/watchforest
 
-go 1.23.3
+go 1.23.6
 
-require github.com/google/uuid v1.6.0
+toolchain go1.24.2
+
+require github.com/leowie93/goenv v0.1.0

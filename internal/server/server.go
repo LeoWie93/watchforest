@@ -17,6 +17,7 @@ type Server struct {
 	sessionLength time.Duration
 	port          int
 	templates     *Templates
+	sessionCookie *http.Cookie
 
 	// authTypeHandler Array
 	//// github, gitlab
@@ -48,7 +49,7 @@ func NewServer() *http.Server {
 	newServer := &Server{
 		env:           env,
 		domain:        domain,
-		sessionLength: time.Hour,
+		sessionLength: time.Hour * 24 * 7,
 		port:          port,
 		templates:     NewTemplates(),
 	}

@@ -20,8 +20,4 @@ func main() {
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		panic(fmt.Sprintf("http server error: %s", err))
 	}
-
-	// middleware that knows all types of auth middlewares
-	// initialises all types (.env, clients etc)
-	// e.Use(auth.userMiddleware())
 }

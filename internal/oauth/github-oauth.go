@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -62,17 +61,31 @@ func RequestAccessToken(code string) (responseStruct *GithubAccessTokenResponse,
 
 }
 
-// user param
-func GetUserMail(accessToken string) {
-	//TODO move into its own function
+type UserGetMailResponse struct {
+	Email      string `json:"email"`
+	Primary    bool   `json:"primary"`
+	Verified   bool   `json:"verified"`
+	Visibility string `json:"visibility"`
+}
+
+func GetUserMails(accessToken string) (responses []UserGetMailResponse, err error) {
 	//get first public email (should be primary every time. api does not allow specific query for the primary email)
-	req, _ := http.NewRequest(http.MethodGet, "https://api.github.com/user/public_emails?per_page=1", nil)
-	req.Header.Add("Authorization", "Bearer "+accessToken)
-	req.Header.Add("Accept", "application/vnd.github+json")
-	res, _ := http.DefaultClient.Do(req)
+	req, _ := http.NewRequest(
+		http.MethodGet,
+		"https://api.github.com/user/public_emails",
+		nil,
+	)
 
-	body, _ := io.ReadAll(res.Body)
-	res.Body.Close()
+	req.Header.Add("Authorization", "Bearerr "+accessToken)
+	req.Header.Add("Accept", "application/json")
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
 
-	fmt.Println(body)
+	if err = json.NewDecoder(res.Body).Decode(&responses); err != nil {
+		return nil, err
+	}
+
+	return responses, nil
 }

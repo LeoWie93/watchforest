@@ -2,13 +2,16 @@ package server
 
 import (
 	"fmt"
-	"html/template"
-	"io"
 	"log/slog"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/leowie93/watchforest/internal/database/models"
+	"github.com/leowie93/watchforest/internal/templates"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 type Server struct {
@@ -16,42 +19,35 @@ type Server struct {
 	domain        string
 	sessionLength time.Duration
 	port          int
-	templates     *Templates
+	templates     *templates.Templates
 	sessionCookie *http.Cookie
-
-	// authTypeHandler Array
-	//// github, gitlab
-	//// email
-
-	// db database.Service
-}
-
-// Move into views/templates.go
-type Templates struct {
-	templates *template.Template
-}
-
-func (t *Templates) Render(wr io.Writer, name string, data interface{}) error {
-	return t.templates.ExecuteTemplate(wr, name, data)
-}
-
-func NewTemplates() *Templates {
-	return &Templates{
-		templates: template.Must(template.ParseGlob("internal/views/*.html")),
-	}
+	db            *gorm.DB
 }
 
 func NewServer() *http.Server {
 	env := os.Getenv("APP_ENV")
 	domain := os.Getenv("APP_DOMAIN")
 	port, _ := strconv.Atoi(os.Getenv("APP_PORT"))
+	dbPath := os.Getenv("DB_FS_PATH")
+
+	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
+	if err != nil {
+		panic(err)
+	}
+
+	//TODO keep this here or move?
+	//run migrations and general db stuff
+	if err := db.AutoMigrate(&models.User{}, &models.Session{}); err != nil {
+		panic(err)
+	}
 
 	newServer := &Server{
 		env:           env,
 		domain:        domain,
 		sessionLength: time.Hour * 24 * 7,
 		port:          port,
-		templates:     NewTemplates(),
+		templates:     templates.NewTemplates(),
+		db:            db,
 	}
 
 	server := &http.Server{

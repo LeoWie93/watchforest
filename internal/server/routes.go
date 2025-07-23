@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -146,21 +145,18 @@ func (s *Server) OauthGithubCallbackHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	atResponse, err := oauth.RequestAccessToken(code)
+	accessTokenResponse, err := oauth.RequestAccessToken(code)
 	if err != nil {
 		http.Redirect(w, r, "/login", 302)
 	}
-	req, _ := http.NewRequest(http.MethodGet, "https://api.github.com/user/public_emails?per_page=1", nil)
-	req.Header.Add("Authorization", "Bearer "+atResponse.AccessToken)
-	req.Header.Add("Accept", "application/vnd.github+json")
-	res, _ := http.DefaultClient.Do(req)
 
-	body, _ := io.ReadAll(res.Body)
-	res.Body.Close()
+	responses, err := oauth.GetUserMails(accessTokenResponse.AccessToken)
+	if err != nil {
+		helper.HandleError(err)
+		//TODO set error message (message back or session back handling whatever. mem-db would be fun)
+		http.Redirect(w, r, "/login", 302)
+		return
+	}
 
-	w.Write(body)
-
-	// use oauth.GetUserMail(access_token)
-
-	// create or get user if not exists
+	fmt.Println(responses)
 }
